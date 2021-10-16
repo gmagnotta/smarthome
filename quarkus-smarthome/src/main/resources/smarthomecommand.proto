@@ -1,0 +1,40 @@
+syntax = "proto2";
+
+package org.gmagnotta.smarthome.model.event;
+
+message SmartHomeCommandRequest {
+
+	required string id = 1;
+
+	required string replyto = 2;
+
+	required string realm = 3;
+
+	enum Operation {
+
+		CREATE = 0;
+		READ = 1;
+		UPDATE = 2;
+		DELETE = 3;
+
+	}
+
+	required Operation operation = 4;
+
+	required string resource = 5;
+	
+	required string type = 6;
+	
+	required string value = 7;
+	
+}
+
+message SmartHomeCommandResponse {
+
+	required string correlationid = 1;
+
+	required string status = 2;
+
+	optional string description = 3;
+	
+}

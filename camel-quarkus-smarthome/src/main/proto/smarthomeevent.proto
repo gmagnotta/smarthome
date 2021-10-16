@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package org.gmagnotta.smarthome.model.event;
+
+message SmartHomeEvent {
+
+	required string realm = 1;
+
+	required string item = 2;
+	
+	required string type = 3;
+	
+	required string value = 4;
+	
+}

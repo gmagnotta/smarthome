@@ -56,7 +56,7 @@ public class EventReceiver {
     public void receive(byte[] payload) throws Exception {
 
         SmartHomeEvent smarthomeevent = Smarthomeevent.SmartHomeEvent.parseFrom(payload);
-        logger.info("Received msg " + smarthomeevent);
+        logger.debug("Received msg " + smarthomeevent);
 
         if (smarthomeevent.getItem().equals("zwave_device_b4728f7c_node2_sensor_door")) {
 
@@ -71,17 +71,19 @@ public class EventReceiver {
             Double readTemp = Double
                     .parseDouble(smarthomeevent.getValue().substring(0, smarthomeevent.getValue().indexOf(" ")));
 
-            logger.info("Read Temp " + readTemp);
+            logger.debug("Read Temp " + readTemp);
 
-            home.getRoom(tempsensorRoom.get(smarthomeevent.getItem())).setTemperature(readTemp);
+            if (home.hasRoom(tempsensorRoom.get(smarthomeevent.getItem())))
+                home.getRoom(tempsensorRoom.get(smarthomeevent.getItem())).setTemperature(readTemp);
 
         } else if (humidsensorRoom.containsKey(smarthomeevent.getItem())) {
 
             Double readHum = Double.parseDouble(smarthomeevent.getValue());
 
-            logger.info("Read Humid " + readHum);
+            logger.debug("Read Humid " + readHum);
 
-            home.getRoom(humidsensorRoom.get(smarthomeevent.getItem())).setHumidity(readHum);
+            if (home.hasRoom(humidsensorRoom.get(smarthomeevent.getItem())))
+                home.getRoom(humidsensorRoom.get(smarthomeevent.getItem())).setHumidity(readHum);
 
         } else if (smarthomeevent.getItem().equals("Climate_Control")) {
 
@@ -90,7 +92,7 @@ public class EventReceiver {
             } else if ("ON".equals(smarthomeevent.getValue())) {
                 home.setClimateControl(true);
             } else {
-                logger.info("Unknown value Climate_Control " + smarthomeevent.getValue());
+                logger.warn("Unknown value Climate_Control " + smarthomeevent.getValue());
                 home.setClimateControl(false);
             }
 
@@ -101,63 +103,95 @@ public class EventReceiver {
             } else if ("ECO".equals(smarthomeevent.getValue())) {
                 home.setClimateMode(ClimateMode.ECO);
             } else {
-                logger.info("Unknown value Climate_Mode " + smarthomeevent.getValue());
+                logger.warn("Unknown value Climate_Mode " + smarthomeevent.getValue());
                 home.setClimateMode(ClimateMode.ECO);
             }
 
         } else if (smarthomeevent.getItem().equals("Comfort_Temp_Livingroom")) {
 
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Livingroom").setComfortTemp(temp);
+            if (home.hasRoom("Livingroom"))
+                home.getRoom("Livingroom").setComfortTemp(temp);
         
         } else if (smarthomeevent.getItem().equals("Eco_Temp_Livingroom")) {
             
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Livingroom").setEcoTemp(temp);
+            if (home.hasRoom("Livingroom"))
+                home.getRoom("Livingroom").setEcoTemp(temp);
 
         } else if (smarthomeevent.getItem().equals("Comfort_Temp_Hallway")) {
 
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Hallway").setComfortTemp(temp);
+            if (home.hasRoom("Hallway")) 
+                home.getRoom("Hallway").setComfortTemp(temp);
         
         } else if (smarthomeevent.getItem().equals("Eco_Temp_Hallway")) {
             
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Hallway").setEcoTemp(temp);
+            if (home.hasRoom("Hallway")) 
+                home.getRoom("Hallway").setEcoTemp(temp);
 
         } else if (smarthomeevent.getItem().equals("Comfort_Temp_Bedroom1")) {
 
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bedroom1").setComfortTemp(temp);
+            if (home.hasRoom("Bedroom1")) 
+                home.getRoom("Bedroom1").setComfortTemp(temp);
         
         } else if (smarthomeevent.getItem().equals("Eco_Temp_Bedroom1")) {
             
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bedroom1").setEcoTemp(temp);
+            if (home.hasRoom("Bedroom1")) 
+                home.getRoom("Bedroom1").setEcoTemp(temp);
 
         } else if (smarthomeevent.getItem().equals("Comfort_Temp_Bedroom2")) {
 
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bedroom2").setComfortTemp(temp);
+            if (home.hasRoom("Bedroom2")) 
+                home.getRoom("Bedroom2").setComfortTemp(temp);
         
         } else if (smarthomeevent.getItem().equals("Eco_Temp_Bedroom2")) {
             
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bedroom2").setEcoTemp(temp);
+            if (home.hasRoom("Bedroom2")) 
+                home.getRoom("Bedroom2").setEcoTemp(temp);
 
         } else if (smarthomeevent.getItem().equals("Comfort_Temp_Bathroom")) {
 
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bathroom").setComfortTemp(temp);
+            if (home.hasRoom("Bathroom")) 
+                home.getRoom("Bathroom").setComfortTemp(temp);
         
         } else if (smarthomeevent.getItem().equals("Eco_Temp_Bathroom")) {
             
             Double temp = Double.parseDouble(smarthomeevent.getValue());
-            home.getRoom("Bathroom").setEcoTemp(temp);
+            if (home.hasRoom("Bathroom")) 
+                home.getRoom("Bathroom").setEcoTemp(temp);
         
-        }
+        } else if (smarthomeevent.getItem().equals("Away_Mode")) {
+            
+            if ("OFF".equals(smarthomeevent.getValue())) {
+                home.setAwayMode(false);
+            } else if ("ON".equals(smarthomeevent.getValue())) {
+                home.setAwayMode(true);
+            } else {
+                logger.warn("Unknown value Away_Mode " + smarthomeevent.getValue());
+                home.setClimateControl(false);
+            }
 
-        logger.info(home);
+        }  else if (smarthomeevent.getItem().equals("Caldaia_Switch")) {
+            
+            if ("OFF".equals(smarthomeevent.getValue())) {
+                home.setBoilerWorking(false);
+            } else if ("ON".equals(smarthomeevent.getValue())) {
+                home.setBoilerWorking(true);
+            } else {
+                logger.warn("Unknown value Caldaia_Switch " + smarthomeevent.getValue());
+                home.setBoilerWorking(false);
+            }
+
+        } 
+
+        //logger.info(home);
     }
 
 }

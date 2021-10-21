@@ -1,6 +1,6 @@
 package org.gmagnotta.smarthome.model;
 
-public interface HouseObserver {
+public interface HomeObserver {
 
     public void temperatureChanged(Room room, Double temperature);
 
@@ -13,5 +13,9 @@ public interface HouseObserver {
     public void climateControlChanged(Home house, boolean climateControl);
 
     public void climateModeChanged(Home house, ClimateMode climateMode);
+
+    public void awayModeChanged(Home house, boolean awayMode);
+
+    public void boilerChanged(Home house, boolean boilerState);
 
 }

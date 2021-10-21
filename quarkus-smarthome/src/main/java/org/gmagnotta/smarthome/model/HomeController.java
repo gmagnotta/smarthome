@@ -12,7 +12,7 @@ import org.jboss.logging.Logger;
 import org.gmagnotta.utils.Service;
 
 @ApplicationScoped
-public class HouseController implements HouseObserver {
+public class HomeController implements HomeObserver {
 
     @Inject
     Logger logger;
@@ -24,8 +24,8 @@ public class HouseController implements HouseObserver {
     public void temperatureChanged(Room room, Double temperature) {
         logger.info("Temperature changed in " + room + " to " + temperature);
 
-        // if climate control is disabled just exist
-        if (!room.getHome().getClimateConfrol()) {
+        // if climate control is disabled just exit
+        if (!room.getHome().getClimateControl()) {
             logger.info("Climate control is disabled. Nothing to do!");
             return;
         }
@@ -33,13 +33,16 @@ public class HouseController implements HouseObserver {
         // if temperature in this room is < threshold, then start heating
         if (temperature.compareTo(room.getThresholdTemp()) < 0) {
             // temperature under threshold!
-            logger.info("Temperature in " + room + " is under threshold! Should start heating!");
-            updateBoiler("ON");
+            logger.info("Temperature in " + room + " is under threshold!");
+
+            if (!room.getHome().isBoilerWorking())
+                updateBoiler("ON");
             // otherwise we need to check all temperatures in all rooms
         } else if (allTempsAboveThreshold(room.getHome())) {
             // all temperature above threshold
-            logger.info("All temperatures above threshold. Should stop heating!");
-            updateBoiler("OFF");
+            logger.info("All temperatures above threshold.");
+            if (room.getHome().isBoilerWorking())
+                updateBoiler("OFF");
         }
 
     }
@@ -55,13 +58,18 @@ public class HouseController implements HouseObserver {
 
         // update TRVs accordingly
         String value = "";
-        if (house.getClimateMode().equals(ClimateMode.COMFORT)) {
+        if (ClimateMode.COMFORT.equals(climateMode)) {
             value = "1";
         } else {
             value = "11";
         }
 
         updateTRVs(value);
+
+        // reevaluate all temperatures in rooms
+        for (Room room : house.getRooms()) {
+            temperatureChanged(room, room.getTemperature());
+        }
     }
 
     private static boolean allTempsAboveThreshold(Home home) {
@@ -93,7 +101,9 @@ public class HouseController implements HouseObserver {
         if (climateControl == false) {
             // turn off everything
 
-            updateBoiler("OFF");
+            if (house.isBoilerWorking())
+                updateBoiler("OFF");
+            
             updateTRVs("0");
 
         } else {
@@ -153,6 +163,46 @@ public class HouseController implements HouseObserver {
             }
         }
 
+    }
+
+    @Override
+    public void awayModeChanged(Home house, boolean awayMode) {
+
+        if (awayMode) {
+    
+            SmartHomeCommandRequest req = SmartHomeCommandRequest.newBuilder().setRealm("OpenHAB")
+                    .setId("" + System.currentTimeMillis()).setReplyto("smarthomeresponse").setResource("Climate_Mode")
+                    .setOperation(Operation.CREATE).setType("String").setValue("ECO").build();
+
+            try {
+
+                service.sendMqtt("smarthomeesb", req);
+
+            } catch (Exception ex) {
+                logger.error("Exception while changing trv", ex);
+            }
+    
+        } else {
+    
+            SmartHomeCommandRequest req = SmartHomeCommandRequest.newBuilder().setRealm("OpenHAB")
+                    .setId("" + System.currentTimeMillis()).setReplyto("smarthomeresponse").setResource("Climate_Mode")
+                    .setOperation(Operation.CREATE).setType("String").setValue("COMFORT").build();
+
+            try {
+
+                service.sendMqtt("smarthomeesb", req);
+
+            } catch (Exception ex) {
+                logger.error("Exception while changing trv", ex);
+            }
+    
+        }
+        
+    }
+
+    @Override
+    public void boilerChanged(Home house, boolean boilerState) {
+       logger.info("Boiler state changed to " + boilerState);
     }
 
 }

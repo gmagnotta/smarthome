@@ -1,17 +1,19 @@
 package org.gmagnotta;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.gmagnotta.smarthome.model.ClimateMode;
 import org.gmagnotta.smarthome.model.Home;
-import org.gmagnotta.smarthome.model.HouseController;
+import org.gmagnotta.smarthome.model.HomeController;
 import org.gmagnotta.smarthome.model.Room;
 import org.gmagnotta.smarthome.model.event.Smarthomecommand.SmartHomeCommandRequest;
 import org.gmagnotta.smarthome.model.event.Smarthomecommand.SmartHomeCommandResponse;
 import org.gmagnotta.smarthome.model.event.Smarthomecommand.SmartHomeCommandRequest.Operation;
 import org.gmagnotta.utils.Service;
+import org.jboss.logging.Logger;
 
 import io.quarkus.runtime.Startup;
 
@@ -23,11 +25,20 @@ public class Main {
      Service service;
 
      @Inject
-     HouseController controller;
+     Logger logger;
 
-     @Produces
-     public Home createHome() throws Exception {
-          Home home = new Home("Magnotta's");
+     @Inject
+     Home home;
+
+     @Inject
+     HomeController houseController;
+
+     @PostConstruct
+     void createHome() throws Exception {
+
+          logger.info("configuring home...");
+
+          home.setName("Magnotta's");
 
           SmartHomeCommandRequest comfortTempReq = SmartHomeCommandRequest.newBuilder()
                     .setId("" + System.currentTimeMillis()).setReplyto("debug").setRealm("OpenHAB")
@@ -146,9 +157,37 @@ public class Main {
                // logger.info("Unknown value Climate_Mode " + smarthomeevent.getValue());
           }
 
-          home.addObserver(controller);
+          SmartHomeCommandRequest awayModeReq = SmartHomeCommandRequest.newBuilder()
+                    .setId("" + System.currentTimeMillis()).setReplyto("debug").setRealm("OpenHAB")
+                    .setResource("Climate_Mode").setOperation(Operation.READ).setType("String").setValue("").build();
 
-          return home;
+          SmartHomeCommandResponse awayModeRes = service.sendRecMqtt("smarthomeesb", awayModeReq);
+
+          if ("OFF".equals(awayModeRes.getStatus())) {
+               home.setAwayMode(false);
+          } else if ("ON".equals(awayModeRes.getStatus())) {
+               home.setAwayMode(true);
+          } else {
+               home.setAwayMode(false);
+          }
+
+          SmartHomeCommandRequest boilerReq = SmartHomeCommandRequest.newBuilder()
+                    .setId("" + System.currentTimeMillis()).setReplyto("debug").setRealm("OpenHAB")
+                    .setResource("Caldaia_Switch").setOperation(Operation.READ).setType("String").setValue("").build();
+
+          SmartHomeCommandResponse boilerRes = service.sendRecMqtt("smarthomeesb", boilerReq);
+
+          if ("OFF".equals(boilerRes.getStatus())) {
+               home.setBoilerWorking(false);
+          } else if ("ON".equals(awayModeRes.getStatus())) {
+               home.setBoilerWorking(true);
+          } else {
+               home.setBoilerWorking(false);
+          }
+
+          logger.info("done configuring home...");
+
+          home.addObserver(houseController);
      }
 
 }

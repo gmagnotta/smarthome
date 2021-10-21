@@ -93,31 +93,39 @@ public class AstroBean {
             service.sendMqtt("smarthomeesb", req);
         }
 
-        req = SmartHomeCommandRequest.newBuilder()
-            .setRealm("OpenHAB")
-            .setId(""+System.currentTimeMillis())
-            .setReplyto("smarthomeresponse")
-            .setResource("Climate_Mode")
-            .setOperation(Operation.CREATE)
-            .setType("String")
-            .setValue("COMFORT").build();
+        if (!home.isAwayMode()) {
 
-        service.sendMqtt("smarthomeesb", req);
+            req = SmartHomeCommandRequest.newBuilder()
+                .setRealm("OpenHAB")
+                .setId(""+System.currentTimeMillis())
+                .setReplyto("smarthomeresponse")
+                .setResource("Climate_Mode")
+                .setOperation(Operation.CREATE)
+                .setType("String")
+                .setValue("COMFORT").build();
+
+            service.sendMqtt("smarthomeesb", req);
+
+        }
         
     }
 
     @Scheduled(cron = "0 23 * * *")
     void setEconomy() throws Exception {
 
-        SmartHomeCommandRequest req = SmartHomeCommandRequest.newBuilder()
-            .setRealm("OpenHAB")
-            .setId(""+System.currentTimeMillis())
-            .setReplyto("smarthomeresponse")
-            .setResource("Climate_Mode")
-            .setOperation(Operation.CREATE)
-            .setType("String")
-            .setValue("ECO").build();
+        if (!home.isAwayMode()) {
 
-        service.sendMqtt("smarthomeesb", req);
+            SmartHomeCommandRequest req = SmartHomeCommandRequest.newBuilder()
+                .setRealm("OpenHAB")
+                .setId(""+System.currentTimeMillis())
+                .setReplyto("smarthomeresponse")
+                .setResource("Climate_Mode")
+                .setOperation(Operation.CREATE)
+                .setType("String")
+                .setValue("ECO").build();
+
+            service.sendMqtt("smarthomeesb", req);
+
+        }
     }
 }

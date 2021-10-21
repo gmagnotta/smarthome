@@ -35,7 +35,7 @@ public class Room {
     public void setTemperature(Double temperature) {
         this.temperature = temperature;
 
-        for (HouseObserver observer : home.getObservers()) {
+        for (HomeObserver observer : home.getObservers()) {
             observer.temperatureChanged(this, temperature);
         }
     }
@@ -47,7 +47,7 @@ public class Room {
     public void setHumidity(Double humidity) {
         this.humidity = humidity;
 
-        for (HouseObserver observer : home.getObservers()) {
+        for (HomeObserver observer : home.getObservers()) {
             observer.humidityChanged(this, humidity);
         }
     }
